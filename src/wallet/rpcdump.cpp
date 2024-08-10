@@ -737,6 +737,7 @@ UniValue importelectrumwallet(const JSONRPCRequest& request)
         }
     } else {
         // json
+        UniValue data(UniValue::VOBJ);
         {
             auto buffer = std::make_unique<char[]>(nFilesize);
             file.read(buffer.get(), nFilesize);
