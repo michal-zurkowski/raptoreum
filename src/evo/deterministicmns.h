@@ -682,8 +682,16 @@ public:
 
 class CDeterministicMNManager
 {
-    static const int DISK_SNAPSHOT_PERIOD = 576; // once per day
-    static const int DISK_SNAPSHOTS = 3; // keep cache for 3 disk snapshots to have 2 full days covered
+    static const int DISK_SNAPSHOT_PERIOD = 720; // once per day
+    // keep cache for enough disk snapshots to have all active quourms covered
+    // TODO This could be calculated with constexpr and better knowledge about
+    // used LLMQs by geting max of (signingActiveQuorumCount * dkgInterval)
+    // Current Mainnet LLMQs:
+    // llmq3_60 = 2 * 30 = 60
+    // llmq20_60 = 4 * 360 = 1440
+    // llmq20_85 = 4 * 720 = 2880
+    // llmq100_67_mainnet = 24 * 24 = 576
+    static const int DISK_SNAPSHOTS = 2880 / DISK_SNAPSHOT_PERIOD + 1;
     static const int LIST_DIFFS_CACHE_SIZE = DISK_SNAPSHOT_PERIOD * DISK_SNAPSHOTS;
 
 public:
