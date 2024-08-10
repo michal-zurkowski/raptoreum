@@ -21,8 +21,10 @@ struct CompareScoreMN
     }
 };
 
-void CSmartnodeUtils::ProcessSmartnodeConnections(CConnman& connman)
+void CSmartnodeUtils::DoMaintenance(CConnman& connman)
 {
+    if(!smartnodeSync.IsBlockchainSynced() || ShutdownRequested())
+        return;
     std::vector<CDeterministicMNCPtr> vecDmns; // will be empty when no wallet
 #ifdef ENABLE_WALLET
     for(const auto& pair : coinJoinClientManagers) {
@@ -70,16 +72,3 @@ void CSmartnodeUtils::ProcessSmartnodeConnections(CConnman& connman)
     });
 }
 
-void CSmartnodeUtils::DoMaintenance(CConnman& connman)
-{
-    if(!smartnodeSync.IsBlockchainSynced() || ShutdownRequested())
-        return;
-
-    static unsigned int nTick = 0;
-
-    nTick++;
-
-    if(nTick % 60 == 0) {
-        ProcessSmartnodeConnections(connman);
-    }
-}
