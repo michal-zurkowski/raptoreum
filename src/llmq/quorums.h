@@ -235,10 +235,10 @@ private:
     // all private methods here are cs_main-free
     void EnsureQuorumConnections(Consensus::LLMQType llmqType, const CBlockIndex *pindexNew) const;
 
-    CQuorumPtr BuildQuorumFromCommitment(Consensus::LLMQType llmqType, const CBlockIndex* pindexQuorum) const;
+    CQuorumPtr BuildQuorumFromCommitment(Consensus::LLMQType llmqType, const CBlockIndex* pindexQuorum, bool populate_cache) const;
     bool BuildQuorumContributions(const CFinalCommitment& fqc, std::shared_ptr<CQuorum>& quorum) const;
 
-    CQuorumCPtr GetQuorum(Consensus::LLMQType llmqType, const CBlockIndex* pindex) const;
+    CQuorumCPtr GetQuorum(Consensus::LLMQType llmqType, const CBlockIndex* pindexi, bool populate_cache = true) const;
     /// Returns the start offset for the smartnode with the given proTxHash. This offset is applied when picking data recovery members of a quorum's
     /// memberlist and is calculated based on a list of all member of all active quorums for the given llmqType in a way that each member
     /// should receive the same number of request if all active llmqType members requests data from one llmqType quorum.

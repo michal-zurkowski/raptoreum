@@ -301,7 +301,7 @@ void CQuorumManager::EnsureQuorumConnections(Consensus::LLMQType llmqType, const
     }
 }
 
-CQuorumPtr CQuorumManager::BuildQuorumFromCommitment(const Consensus::LLMQType llmqType, const CBlockIndex* pindexQuorum) const
+CQuorumPtr CQuorumManager::BuildQuorumFromCommitment(const Consensus::LLMQType llmqType, const CBlockIndex* pindexQuorum, bool populate_cache) const
 {
     AssertLockHeld(quorumsCacheCs);
     assert(pindexQuorum);
@@ -331,7 +331,7 @@ CQuorumPtr CQuorumManager::BuildQuorumFromCommitment(const Consensus::LLMQType l
         }
     }
 
-    if (hasValidVvec) {
+    if (hasValidVvec && populate_cache) {
         // pre-populate caches in the background
         // recovering public key shares is quite expensive and would result in serious lags for the first few signing
         // sessions if the shares would be calculated on-demand
@@ -473,7 +473,9 @@ std::vector<CQuorumCPtr> CQuorumManager::ScanQuorums(Consensus::LLMQType llmqTyp
 
     for (auto& quorumIndex : quorumIndexes) {
         assert(quorumIndex);
-        auto quorum = GetQuorum(llmqType, quorumIndex);
+        // populate cache for keepOldConnections most recent quorums only
+        bool populate_cache = vecResultQuorums.size() <  Params().GetConsensus().llmqs.at(llmqType).keepOldConnections;
+        auto quorum = GetQuorum(llmqType, quorumIndex, populate_cache);
         assert(quorum != nullptr);
         vecResultQuorums.emplace_back(quorum);
     }
@@ -507,7 +509,7 @@ CQuorumCPtr CQuorumManager::GetQuorum(Consensus::LLMQType llmqType, const uint25
     return GetQuorum(llmqType, pindexQuorum);
 }
 
-CQuorumCPtr CQuorumManager::GetQuorum(Consensus::LLMQType llmqType, const CBlockIndex* pindexQuorum) const
+CQuorumCPtr CQuorumManager::GetQuorum(Consensus::LLMQType llmqType, const CBlockIndex* pindexQuorum, bool populate_cache) const
 {
     assert(pindexQuorum);
 
@@ -525,7 +527,7 @@ CQuorumCPtr CQuorumManager::GetQuorum(Consensus::LLMQType llmqType, const CBlock
         return pQuorum;
     }
 
-    return BuildQuorumFromCommitment(llmqType, pindexQuorum);
+    return BuildQuorumFromCommitment(llmqType, pindexQuorum, populate_cache);
 }
 
 size_t CQuorumManager::GetQuorumRecoveryStartOffset(const CQuorumCPtr pQuorum, const CBlockIndex* pIndex) const
@@ -775,7 +777,10 @@ void CQuorumManager::StartCachePopulatorThread(const CQuorumCPtr pQuorum) const
     }
 
     cxxtimer::Timer t(true);
-    LogPrint(BCLog::LLMQ, "CQuorumManager::StartCachePopulatorThread -- start\n");
+    LogPrint(BCLog::LLMQ, "CQuorumManager::StartCachePopulatorThread -- type=%d height=%d hash=%s start\n",
+             (int)pQuorum->params.type,
+             pQuorum->pindexQuorum->nHeight,
+             pQuorum->pindexQuorum->GetBlockHash().ToString());
 
     // when then later some other thread tries to get keys, it will be much faster
     workerPool.push([pQuorum, t, this](int threadId) {
@@ -784,7 +789,11 @@ void CQuorumManager::StartCachePopulatorThread(const CQuorumCPtr pQuorum) const
                 pQuorum->GetPubKeyShare(i);
             }
         }
-        LogPrint(BCLog::LLMQ, "CQuorumManager::StartCachePopulatorThread -- done. time=%d\n", t.count());
+        LogPrint(BCLog::LLMQ, "CQuorumManager::StartCachePopulatorThread -- type=%d height=%d hash=%s done. time=%d\n",
+                 (int)pQuorum->params.type,
+                 pQuorum->pindexQuorum->nHeight,
+                 pQuorum->pindexQuorum->GetBlockHash().ToString(),
+                 t.count());
     });
 }
 
