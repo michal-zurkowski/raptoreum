@@ -290,12 +290,14 @@ void CQuorumManager::EnsureQuorumConnections(Consensus::LLMQType llmqType, const
 
     for (const auto& quorum : lastQuorums) {
         if (CLLMQUtils::EnsureQuorumConnections(llmqType, quorum->pindexQuorum, WITH_LOCK(activeSmartnodeInfoCs, return activeSmartnodeInfo.proTxHash))) {
-            continue;
+            if (connmanQuorumsToDelete.erase(quorum->qc.quorumHash) > 0) {
+                LogPrint(BCLog::LLMQ, "CQuorumManager::%s -- llmqType[%d] h[%d] keeping mn quorum connections for quorum: [%d:%s]\n", __func__, int(llmqType), pindexNew->nHeight, quorum->pindexQuorum->nHeight, quorum->pindexQuorum->GetBlockHash().ToString());
+            }
         }
-        if (connmanQuorumsToDelete.count(quorum->qc.quorumHash) > 0) {
-            LogPrint(BCLog::LLMQ, "CQuorumManager::%s -- removing smartnodes quorum connections for quorum %s:\n", __func__, quorum->qc.quorumHash.ToString());
-            g_connman->RemoveSmartnodeQuorumNodes(llmqType, quorum->qc.quorumHash);
-        }
+    }
+    for (const auto& quorumHash : connmanQuorumsToDelete) {
+        LogPrint(BCLog::LLMQ, "CQuorumManager::%s -- removing smartnodes quorum connections for quorum %s:\n", __func__, quorumHash.ToString());
+        g_connman->RemoveSmartnodeQuorumNodes(llmqType, quorumHash);
     }
 }
 
