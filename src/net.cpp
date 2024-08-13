@@ -1357,6 +1357,7 @@ void CConnman::DisconnectNodes()
                     LogPrintf("ThreadSocketHandler -- removing node: peer=%d nRefCount=%d fInbound=%d m_smartnode_connection=%d m_smartnode_iqr_connection=%d\n",
                           pnode->GetId(), pnode->GetRefCount(), pnode->fInbound, pnode->m_smartnode_connection, pnode->m_smartnode_iqr_connection);
                 }
+                LogPrintf("ThreadSocketHandler -- removing node: 1st vNodeDisconnected.size()=%lu\n", vNodesDisconnected.size());
 
                 LogPrintf("ThreadSocketHandler -- vNode.erase -- peer=%d\n", pnode->GetId());
                 // remove from vNodes
@@ -1374,7 +1375,7 @@ void CConnman::DisconnectNodes()
                 // hold in disconnected pool until all refs are released
                 pnode->Release();
                 vNodesDisconnected.push_back(pnode);
-                LogPrintf("ThreadSocketHandler -- removing node: vNodeDisconnected.size()=%lu\n", vNodesDisconnected.size());
+                LogPrintf("ThreadSocketHandler -- removing node: actualy added vNodeDisconnected.size()=%lu\n", vNodesDisconnected.size());
             } else {
                 ++it;
             }
