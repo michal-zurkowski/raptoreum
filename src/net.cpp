@@ -1370,6 +1370,7 @@ void CConnman::DisconnectNodes()
                 // hold in disconnected pool until all refs are released
                 pnode->Release();
                 vNodesDisconnected.push_back(pnode);
+                LogPrintf("ThreadSocketHandler -- removing node: vNodeDisconnected.size()=%lu\n", vNodesDisconnected.size());
             } else {
                 ++it;
             }
@@ -1377,7 +1378,7 @@ void CConnman::DisconnectNodes()
     }
     {
         // Delete disconnected nodes
-        std::list<CNode*> vNodesDisconnectedCopy = vNodesDisconnected;
+        //std::list<CNode*> vNodesDisconnectedCopy = vNodesDisconnected;
         for (auto it = vNodesDisconnected.begin(); it != vNodesDisconnected.end(); )
         {
             CNode* pnode = *it;
@@ -1395,6 +1396,13 @@ void CConnman::DisconnectNodes()
                 }
                 if (fDelete) {
                     it = vNodesDisconnected.erase(it);
+                    if (fLogIPs) {
+                        LogPrintf("ThreadSocketHandler -- deletinging node: peer=%d addr=%s nRefCount=%d fInbound=%d m_smartnode_connection=%d m_smartnode_iqr_connection=%d\n",
+                              pnode->GetId(), pnode->addr.ToString(), pnode->GetRefCount(), pnode->fInbound, pnode->m_smartnode_connection, pnode->m_smartnode_iqr_connection);
+                    } else {
+                        LogPrintf("ThreadSocketHandler -- deleteinging node: peer=%d nRefCount=%d fInbound=%d m_smartnode_connection=%d m_smartnode_iqr_connection=%d\n",
+                              pnode->GetId(), pnode->GetRefCount(), pnode->fInbound, pnode->m_smartnode_connection, pnode->m_smartnode_iqr_connection);
+                    }
                     DeleteNode(pnode);
                 }
             }
@@ -3446,7 +3454,15 @@ void CConnman::DeleteNode(CNode* pnode)
     bool fUpdateConnectionTime = false;
     m_msgproc->FinalizeNode(pnode->GetId(), fUpdateConnectionTime);
     if(fUpdateConnectionTime) {
+        if (fLogIPs) {
+            LogPrintf("ThreadSocketHandler -- DeleteNode(): peer=%d addr=%s nRefCount=%d fInbound=%d m_smartnode_connection=%d m_smartnode_iqr_connection=%d\n",
+                  pnode->GetId(), pnode->addr.ToString(), pnode->GetRefCount(), pnode->fInbound, pnode->m_smartnode_connection, pnode->m_smartnode_iqr_connection);
+        } else {
+            LogPrintf("ThreadSocketHandler -- DeleteNode(): peer=%d nRefCount=%d fInbound=%d m_smartnode_connection=%d m_smartnode_iqr_connection=%d\n",
+                  pnode->GetId(), pnode->GetRefCount(), pnode->fInbound, pnode->m_smartnode_connection, pnode->m_smartnode_iqr_connection);
+        }
         addrman.Connected(pnode->addr);
+        LogPrintf("ThreadSocketHandler -- DeleteNode(): Add to addrman.Connected(pnode->addr) -- addrma.size()=%lu\n", addrman.size());
     }
     delete pnode;
 }
