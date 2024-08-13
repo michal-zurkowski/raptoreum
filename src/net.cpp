@@ -1358,15 +1358,19 @@ void CConnman::DisconnectNodes()
                           pnode->GetId(), pnode->GetRefCount(), pnode->fInbound, pnode->m_smartnode_connection, pnode->m_smartnode_iqr_connection);
                 }
 
+                LogPrintf("ThreadSocketHandler -- vNode.erase -- peer=%d\n", pnode->GetId());
                 // remove from vNodes
                 it = vNodes.erase(it);
 
+                LogPrintf("ThreadSocketHandler -- pnode->grantOutbound.Release() -- peer=%d\n", pnode->GetId());
                 // release outbound grant (if any)
                 pnode->grantOutbound.Release();
 
+                LogPrintf("ThreadSocketHandler -- pnode->CloseSocketDisconnect() -- peer=%d\n", pnode->GetId());
                 // close socket and cleanup
                 pnode->CloseSocketDisconnect(this);
 
+                LogPrintf("ThreadSocketHandler -- pnode->Release() -- peer=%d\n", pnode->GetId());
                 // hold in disconnected pool until all refs are released
                 pnode->Release();
                 vNodesDisconnected.push_back(pnode);
